@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, supabaseAdmin } from './supabase';
 import type { Business, Client, Payment, Document, ActivityLog, User, Registration } from '@/types';
 
 // ── Mappers ────────────────────────────────────────────────
@@ -161,6 +161,63 @@ export async function updateRegistrationStatus(id: string, status: Registration[
 export async function deleteRegistration(id: string): Promise<void> {
   const { error } = await supabase.from('av_registrations').delete().eq('id', id);
   if (error) throw new Error(error.message);
+}
+
+/**
+ * APPROVE REGISTRATION:
+ * 1. Creates a Supabase Auth user (email + password) using service role
+ * 2. Creates a business record in av_businesses
+ * 3. Marks the registration as approved
+ */
+export async function approveRegistration(reg: Registration, password: string, adminNotes?: string): Promise<void> {
+  // Step 1 — Create Supabase Auth user with service role (so no email confirmation required)
+  const { error: userError } = await supabaseAdmin.auth.admin.createUser({
+    email: reg.email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      name: reg.contactName,
+      business_name: reg.businessName,
+      role: 'client',
+    },
+  });
+  // Ignore "already registered" — user might already exist
+  if (userError && !userError.message.toLowerCase().includes('already registered') && !userError.message.toLowerCase().includes('already been registered')) {
+    throw new Error(`Error creando usuario: ${userError.message}`);
+  }
+
+  // Step 2 — Create business record
+  const baseSlug = reg.businessName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const slug = `${baseSlug}-${Date.now().toString(36)}`;
+  const trialEndsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const notes = [
+    `Registrado desde formulario público.`,
+    `Contacto: ${reg.contactName}`,
+    `Tipo: ${reg.businessType}`,
+    reg.description ? `Descripción: ${reg.description}` : '',
+    reg.address ? `Dirección: ${reg.address}` : '',
+    adminNotes ? `Nota admin: ${adminNotes}` : '',
+  ].filter(Boolean).join(' | ');
+
+  const { error: bizError } = await supabaseAdmin.from('av_businesses').insert({
+    name: reg.businessName,
+    slug,
+    email: reg.email,
+    phone: reg.phone,
+    status: 'trial',
+    trial_ends_at: trialEndsAt,
+    notes,
+  });
+  if (bizError) throw new Error(`Error creando negocio: ${bizError.message}`);
+
+  // Step 3 — Mark registration as approved
+  const update: Record<string, unknown> = {
+    status: 'approved',
+    reviewed_at: new Date().toISOString(),
+  };
+  if (adminNotes) update.admin_notes = adminNotes;
+  await supabaseAdmin.from('av_registrations').update(update).eq('id', reg.id);
 }
 
 // ── BUSINESSES ─────────────────────────────────────────────
