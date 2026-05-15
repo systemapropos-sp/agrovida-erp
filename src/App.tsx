@@ -14,9 +14,18 @@ import Documents from '@/pages/Documents';
 import Settings from '@/pages/Settings';
 import AppLayout from '@/components/layout/AppLayout';
 import ToastContainer from '@/components/layout/ToastContainer';
+// Portal (client ERP)
+import PortalLayout from '@/portal/PortalLayout';
+import PortalDashboard from '@/portal/PortalDashboard';
+import PortalPOS from '@/portal/PortalPOS';
+import PortalInventario from '@/portal/PortalInventario';
+import PortalCultivos from '@/portal/PortalCultivos';
+import PortalGanados from '@/portal/PortalGanados';
+import PortalReportes from '@/portal/PortalReportes';
+import PortalConfiguracion from '@/portal/PortalConfiguracion';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuthStore();
+function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuthStore();
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-screen bg-white">
       <div className="flex flex-col items-center gap-4">
@@ -26,17 +35,38 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     </div>
   );
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role === 'client') return <Navigate to="/portal" replace />;
+  return <>{children}</>;
+}
+
+function ProtectedClientRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuthStore();
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-t-transparent animate-spin" style={{ borderColor: '#16A34A', borderTopColor: 'transparent' }} />
+        <p className="text-sm text-gray-400">Cargando...</p>
+      </div>
+    </div>
+  );
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role === 'super_admin') return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
+  const defaultRedirect = user?.role === 'client' ? '/portal' : '/';
+
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />} />
+        {/* Public */}
+        <Route path="/login" element={isAuthenticated ? <Navigate to={defaultRedirect} replace /> : <LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
-        <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+
+        {/* ADMIN routes */}
+        <Route path="/" element={<ProtectedAdminRoute><AppLayout /></ProtectedAdminRoute>}>
           <Route index element={<Dashboard />} />
           <Route path="businesses" element={<Businesses />} />
           <Route path="businesses/:id" element={<BusinessDetail />} />
@@ -46,7 +76,19 @@ function AppRoutes() {
           <Route path="documents" element={<Documents />} />
           <Route path="settings" element={<Settings />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
+
+        {/* CLIENT PORTAL routes */}
+        <Route path="/portal" element={<ProtectedClientRoute><PortalLayout /></ProtectedClientRoute>}>
+          <Route index element={<PortalDashboard />} />
+          <Route path="pos" element={<PortalPOS />} />
+          <Route path="inventario" element={<PortalInventario />} />
+          <Route path="cultivos" element={<PortalCultivos />} />
+          <Route path="ganados" element={<PortalGanados />} />
+          <Route path="reportes" element={<PortalReportes />} />
+          <Route path="configuracion" element={<PortalConfiguracion />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to={isAuthenticated ? defaultRedirect : '/login'} replace />} />
       </Routes>
     </AnimatePresence>
   );

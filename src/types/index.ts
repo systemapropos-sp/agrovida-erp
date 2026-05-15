@@ -100,7 +100,8 @@ export interface User {
   email: string;
   name: string;
   avatar: string;
-  role: 'super_admin';
+  role: 'super_admin' | 'client';
+  businessName?: string;
 }
 
 export interface Toast {

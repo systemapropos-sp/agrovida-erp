@@ -87,18 +87,20 @@ function mapActivityLog(r: Record<string, unknown>): ActivityLog {
 
 // ── AUTH ───────────────────────────────────────────────────
 export async function login(usernameOrEmail: string, password: string): Promise<{ user: User; token: string }> {
-  // Support "smartboys" as username alias → admin@agrovidapro.com
   let email = usernameOrEmail;
   if (usernameOrEmail.toLowerCase() === 'smartboys') {
     email = import.meta.env.VITE_ADMIN_EMAIL || 'admin@agrovidapro.com';
   }
-
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw new Error(error.message === 'Invalid login credentials' ? 'Credenciales inválidas' : error.message);
   const au = data.user;
+  const isClient = (au.user_metadata?.role as string) === 'client';
   const user: User = {
-    id: au.id, email: au.email || '', name: (au.user_metadata?.name as string) || 'Admin',
-    avatar: (au.user_metadata?.avatar as string) || '', role: 'super_admin',
+    id: au.id, email: au.email || '',
+    name: (au.user_metadata?.name as string) || (isClient ? 'Cliente' : 'Admin'),
+    avatar: (au.user_metadata?.avatar as string) || '',
+    role: isClient ? 'client' : 'super_admin',
+    businessName: (au.user_metadata?.business_name as string) || '',
   };
   return { user, token: data.session?.access_token || '' };
 }
@@ -110,7 +112,14 @@ export async function getCurrentUser(): Promise<User | null> {
   const session = data.session;
   if (!session) return null;
   const au = session.user;
-  return { id: au.id, email: au.email || '', name: (au.user_metadata?.name as string) || 'Admin', avatar: (au.user_metadata?.avatar as string) || '', role: 'super_admin' };
+  const isClient = (au.user_metadata?.role as string) === 'client';
+  return {
+    id: au.id, email: au.email || '',
+    name: (au.user_metadata?.name as string) || (isClient ? 'Cliente' : 'Admin'),
+    avatar: (au.user_metadata?.avatar as string) || '',
+    role: isClient ? 'client' : 'super_admin',
+    businessName: (au.user_metadata?.business_name as string) || '',
+  };
 }
 
 // ── REGISTRATIONS (new registration workflow) ──────────────
