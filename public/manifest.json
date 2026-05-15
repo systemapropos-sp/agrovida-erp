@@ -1,0 +1,13 @@
+{
+  "name": "AgroVida ERP",
+  "short_name": "AgroVida",
+  "description": "Sistema ERP para AgroVida",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16A34A",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

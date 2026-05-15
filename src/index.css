@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* AgroVida — Green Agricultural Theme */
+    --background: 0 0% 100%;
+    --foreground: 220 15% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 10%;
+    --primary: 142 72% 37%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 15% 20%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 142 72% 37%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 142 72% 37%;
+    --radius: 0.625rem;
+
+    /* Design Tokens — AgroVida Green */
+    --bg-primary: #FFFFFF;
+    --bg-surface: #FAFAFA;
+    --bg-surface-hover: #F4F4F5;
+    --bg-sidebar: #F8FBF8;
+    --bg-input: #F4F4F5;
+    --bg-input-focus: #EEEEEF;
+    --border-subtle: #E5E5E8;
+    --border-medium: #D4D4D8;
+    --border-accent: #16A34A;
+    --text-primary: #18181B;
+    --text-secondary: #52525B;
+    --text-muted: #A1A1AA;
+
+    /* GREEN is the accent */
+    --accent-primary: #16A34A;
+    --accent-primary-hover: #22C55E;
+    --accent-secondary: #4ADE80;
+    --accent-gradient: linear-gradient(135deg, #16A34A, #22C55E);
+
+    --success: #16A34A;
+    --success-bg: rgba(22, 163, 74, 0.08);
+    --warning: #D97706;
+    --warning-bg: rgba(217, 119, 6, 0.08);
+    --danger: #DC2626;
+    --danger-bg: rgba(220, 38, 38, 0.08);
+    --info: #52525B;
+    --info-bg: rgba(82, 82, 91, 0.08);
+
+    --chart-grid: #E5E5E8;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(22, 163, 74, 0.1);
+    --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(22, 163, 74, 0.06);
+  }
+}
+
+@layer base {
+  * { border-color: hsl(var(--border)); }
+  html {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+/* Shimmer */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, #F0F0F1 25%, #E4E4E7 50%, #F0F0F1 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Float animations */
+@keyframes float1 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(100px, 50px); }
+  66% { transform: translate(50px, 100px); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(-80px, 60px); }
+  66% { transform: translate(-40px, -80px); }
+}
+@keyframes float3 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(60px, -100px); }
+  66% { transform: translate(-60px, -50px); }
+}
+@keyframes float4 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
+}
+
+/* Page transitions */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-slide-up { animation: fadeSlideUp 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) forwards; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D4D4D8; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
+
+/* Toast progress */
+@keyframes toast-progress { from { width: 100%; } to { width: 0%; } }
+.toast-progress { animation: toast-progress 4s linear forwards; }
+
+/* Shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake 0.3s ease-in-out; }
+
+/* Card hover */
+.card-hover { transition: transform 200ms ease-out, box-shadow 200ms ease-out; }
+.card-hover:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-hover); }
+
+/* Glass sidebar */
+.glass-sidebar {
+  background: rgba(248, 251, 248, 0.96);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
