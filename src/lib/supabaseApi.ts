@@ -115,7 +115,8 @@ export async function getCurrentUser(): Promise<User | null> {
 
 // ── REGISTRATIONS (new registration workflow) ──────────────
 export async function createRegistration(data: Omit<Registration, 'id' | 'createdAt' | 'status' | 'adminNotes' | 'reviewedAt'>): Promise<Registration> {
-  const { data: row, error } = await supabase
+  // anon user has INSERT only — do NOT use .select() after insert to avoid 401
+  const { error } = await supabase
     .from('av_registrations')
     .insert({
       business_name: data.businessName,
@@ -126,10 +127,16 @@ export async function createRegistration(data: Omit<Registration, 'id' | 'create
       business_type: data.businessType,
       description: data.description,
       status: 'pending',
-    })
-    .select().single();
+    });
   if (error) throw new Error(error.message);
-  return mapRegistration(row as Record<string, unknown>);
+  // Return constructed object — we don't need the DB row on the Register page
+  return {
+    id: '', businessName: data.businessName, contactName: data.contactName,
+    email: data.email, phone: data.phone, address: data.address || '',
+    businessType: data.businessType, description: data.description || '',
+    status: 'pending', adminNotes: '', reviewedAt: null,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export async function getRegistrations(): Promise<Registration[]> {
