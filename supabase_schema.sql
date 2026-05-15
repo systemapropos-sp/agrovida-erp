@@ -120,33 +120,67 @@ ALTER TABLE av_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE av_activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE av_registrations ENABLE ROW LEVEL SECURITY;
 
--- Authenticated users (admin) can do everything
-CREATE POLICY "auth_all_av_businesses" ON av_businesses FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_av_clients" ON av_clients FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_av_payments" ON av_payments FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_av_documents" ON av_documents FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_av_activity" ON av_activity_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "auth_all_av_registrations" ON av_registrations FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Authenticated users (admin) can do everything — safe with IF NOT EXISTS
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_businesses' AND policyname='auth_all_av_businesses') THEN
+    CREATE POLICY "auth_all_av_businesses" ON av_businesses FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_clients' AND policyname='auth_all_av_clients') THEN
+    CREATE POLICY "auth_all_av_clients" ON av_clients FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_payments' AND policyname='auth_all_av_payments') THEN
+    CREATE POLICY "auth_all_av_payments" ON av_payments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_documents' AND policyname='auth_all_av_documents') THEN
+    CREATE POLICY "auth_all_av_documents" ON av_documents FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_activity_logs' AND policyname='auth_all_av_activity') THEN
+    CREATE POLICY "auth_all_av_activity" ON av_activity_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_registrations' AND policyname='auth_all_av_registrations') THEN
+    CREATE POLICY "auth_all_av_registrations" ON av_registrations FOR ALL TO authenticated USING (true) WITH CHECK (true);
+  END IF;
+END $$;
 
 -- Anonymous users can INSERT registrations (self-registration)
-CREATE POLICY "anon_insert_av_registrations" ON av_registrations FOR INSERT TO anon WITH CHECK (true);
--- Anonymous users can SELECT av_registrations they just created (optional - remove for more security)
--- CREATE POLICY "anon_select_own_registrations" ON av_registrations FOR SELECT TO anon USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='av_registrations' AND policyname='anon_insert_av_registrations') THEN
+    CREATE POLICY "anon_insert_av_registrations" ON av_registrations FOR INSERT TO anon WITH CHECK (true);
+  END IF;
+END $$;
 
 -- ── STORAGE BUCKET ─────────────────────────────────────────
--- Run in Supabase Storage:
--- Create a bucket named "logos" with public access
 INSERT INTO storage.buckets (id, name, public) VALUES ('logos', 'logos', true) ON CONFLICT DO NOTHING;
 
-CREATE POLICY "logos_public_read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'logos');
-CREATE POLICY "logos_auth_upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'logos');
-CREATE POLICY "logos_auth_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'logos');
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='logos_public_read') THEN
+    CREATE POLICY "logos_public_read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'logos');
+  END IF;
+END $$;
 
--- ── SAMPLE DATA ────────────────────────────────────────────
--- Uncomment to insert sample data:
-/*
-INSERT INTO av_businesses (name, slug, email, domain, monthly_amount, status, notes) VALUES
-  ('AgroFarm Demo', 'agrofarm-demo', 'agrofarm@example.com', 'agrofarm.com', 150, 'active', 'Negocio de prueba'),
-  ('Ganadería Norte', 'ganaderia-norte', 'norte@example.com', 'ganaderia-norte.com', 200, 'trial', '')
-ON CONFLICT DO NOTHING;
-*/
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='logos_auth_upload') THEN
+    CREATE POLICY "logos_auth_upload" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'logos');
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='logos_auth_delete') THEN
+    CREATE POLICY "logos_auth_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'logos');
+  END IF;
+END $$;
